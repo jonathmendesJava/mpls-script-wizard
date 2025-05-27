@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +33,12 @@ const MplsTaggedGenerator = () => {
   });
 
   const [showScripts, setShowScripts] = useState(false);
+
+  const handleMatrixIpChange = (value: string) => {
+    // Remove vírgulas e substitui por pontos, permite apenas números e pontos
+    const cleanedValue = value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+    setConfig(prev => ({ ...prev, matrixIp: cleanedValue }));
+  };
 
   const handleBranchCountChange = (count: number) => {
     setConfig(prev => ({
@@ -224,9 +229,10 @@ mpls l2vpn
                       id="matrixIp"
                       placeholder="192.168.0.1"
                       value={config.matrixIp}
-                      onChange={(e) => setConfig(prev => ({ ...prev, matrixIp: e.target.value }))}
+                      onChange={(e) => handleMatrixIpChange(e.target.value)}
                       className="focus:ring-2 focus:ring-green-500"
                     />
+                    <p className="text-xs text-gray-500">Use apenas pontos como separadores (ex: 192.168.1.1)</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="vlanId">VLAN-ID</Label>
