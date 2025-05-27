@@ -10,7 +10,6 @@ import { toast } from '@/hooks/use-toast';
 interface BranchOffice {
   name: string;
   pwId: string;
-  ip: string;
 }
 
 interface NetworkConfig {
@@ -38,8 +37,7 @@ const Index = () => {
       branchCount: count,
       branches: Array(count).fill(null).map((_, index) => ({
         name: `EDD-FILIAL-${String(index + 1).padStart(3, '0')}`,
-        pwId: '',
-        ip: ''
+        pwId: ''
       }))
     }));
   };
@@ -55,11 +53,11 @@ const Index = () => {
 
   const generateMatrixScript = () => {
     const neighborsConfig = config.branches.map(branch => 
-      `  neighbor targeted ${branch.ip}`
+      `  neighbor targeted ${config.matrixIp}`
     ).join('\n');
 
     const pwConfig = config.branches.map(branch => 
-      `    neighbor ${branch.ip}\n     pw-id ${branch.pwId}\n     split-horizon disable\n    !`
+      `    neighbor ${config.matrixIp}\n     pw-id ${branch.pwId}\n     split-horizon disable\n    !`
     ).join('\n');
 
     return `mpls ldp
@@ -149,7 +147,7 @@ mpls l2vpn
       return false;
     }
 
-    const hasEmptyBranches = config.branches.some(branch => !branch.name || !branch.pwId || !branch.ip);
+    const hasEmptyBranches = config.branches.some(branch => !branch.name || !branch.pwId);
     if (hasEmptyBranches) {
       toast({
         title: "Erro de validação",
@@ -253,23 +251,13 @@ mpls l2vpn
                     {config.branches.map((branch, index) => (
                       <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
                         <h4 className="font-semibold text-gray-700">Filial {index + 1}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="space-y-2">
                             <Label htmlFor={`branchName${index}`}>Nome da Filial</Label>
                             <Input
                               id={`branchName${index}`}
                               value={branch.name}
                               onChange={(e) => updateBranch(index, 'name', e.target.value)}
-                              className="focus:ring-2 focus:ring-green-500"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`branchIp${index}`}>IP da Filial</Label>
-                            <Input
-                              id={`branchIp${index}`}
-                              placeholder="192.168.1.2"
-                              value={branch.ip}
-                              onChange={(e) => updateBranch(index, 'ip', e.target.value)}
                               className="focus:ring-2 focus:ring-green-500"
                             />
                           </div>
