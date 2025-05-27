@@ -9,16 +9,16 @@ import { toast } from '@/hooks/use-toast';
 
 interface BranchOffice {
   name: string;
+  tag: string;
   pwId: string;
   ip: string;
-  interfaceVlanId: string;
 }
 
 interface NetworkConfig {
   matrixName: string;
+  matrixTag: string;
   matrixIp: string;
   vlanId: string;
-  matrixInterfaceVlanId: string;
   branchCount: number;
   branches: BranchOffice[];
 }
@@ -26,9 +26,9 @@ interface NetworkConfig {
 const MplsTaggedGenerator = () => {
   const [config, setConfig] = useState<NetworkConfig>({
     matrixName: '',
+    matrixTag: '',
     matrixIp: '',
     vlanId: '',
-    matrixInterfaceVlanId: '',
     branchCount: 0,
     branches: []
   });
@@ -41,9 +41,9 @@ const MplsTaggedGenerator = () => {
       branchCount: count,
       branches: Array(count).fill(null).map((_, index) => ({
         name: `EDD-FILIAL-${String(index + 1).padStart(3, '0')}`,
+        tag: `FILIAL-${String(index + 1).padStart(2, '0')}`,
         pwId: '',
-        ip: '',
-        interfaceVlanId: ''
+        ip: ''
       }))
     }));
   };
@@ -59,11 +59,7 @@ const MplsTaggedGenerator = () => {
 
   const generateMatrixScript = () => {
     const neighborsConfig = config.branches.map(branch => 
-      `  neighbor targeted ${branch.ip}\n  !`
-    ).join('\n');
-
-    const pwConfig = config.branches.map(branch => 
-      `    neighbor ${branch.ip}\n     pw-id ${branch.pwId}\n     split-horizon disable\n    !`
+      `    neighbor ${branch.tag}\n     pw-id ${branch.pwId}\n     split-horizon disable\n    !`
     ).join('\n');
 
     return `mpls ldp
@@ -72,17 +68,19 @@ const MplsTaggedGenerator = () => {
   !
   interface l3-ptp-porta-6
   !
-${neighborsConfig}
+  neighbor targeted ${config.matrixIp}
+  !
 top
 mpls l2vpn
-vpls-group TRANSPORTES-VPN
-  vpn ${config.matrixName}
+ vpls-group TRANSPORTES-VPN
+  vpn ${config.matrixTag}
    vfi
-    pw-type vlan ${config.vlanId}
-${pwConfig}
+    pw-type vlan
+${neighborsConfig}
    !
    bridge-domain
-    access-interface gigabit-ethernet-1/1/3.${config.matrixInterfaceVlanId}
+    dot1q ${config.vlanId}
+    access-interface gigabit-ethernet-1/1/3
     !
    !
   !
@@ -98,19 +96,21 @@ ${pwConfig}
   interface l3-ptp-porta-6
   !
   neighbor targeted ${config.matrixIp}
-  top
+  !
+top
 mpls l2vpn
  vpls-group TRANSPORTES-VPN
-  vpn ${branch.name}
+  vpn ${branch.tag}
    vfi
-    pw-type vlan ${config.vlanId}
+    pw-type vlan
     neighbor ${config.matrixIp}
      pw-id ${branch.pwId}
      split-horizon disable
     !
    !
    bridge-domain
-    access-interface gigabit-ethernet-1/1/3.${branch.interfaceVlanId}
+    dot1q ${config.vlanId}
+    access-interface gigabit-ethernet-1/1/3
     !
    !
   !
@@ -143,7 +143,7 @@ mpls l2vpn
   };
 
   const validateForm = () => {
-    if (!config.matrixName || !config.matrixIp || !config.vlanId || !config.matrixInterfaceVlanId || config.branchCount === 0) {
+    if (!config.matrixName || !config.matrixTag || !config.matrixIp || !config.vlanId || config.branchCount === 0) {
       toast({
         title: "Erro de validação",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -152,7 +152,7 @@ mpls l2vpn
       return false;
     }
 
-    const hasEmptyBranches = config.branches.some(branch => !branch.name || !branch.pwId || !branch.ip || !branch.interfaceVlanId);
+    const hasEmptyBranches = config.branches.some(branch => !branch.name || !branch.tag || !branch.pwId);
     if (hasEmptyBranches) {
       toast({
         title: "Erro de validação",
@@ -209,17 +209,27 @@ mpls l2vpn
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="matrixTag">Tag da Matriz</Label>
+                    <Input
+                      id="matrixTag"
+                      placeholder="TRANSPORTE-MATRIZ"
+                      value={config.matrixTag}
+                      onChange={(e) => setConfig(prev => ({ ...prev, matrixTag: e.target.value }))}
+                      className="focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="matrixIp">IP da Matriz</Label>
                     <Input
                       id="matrixIp"
-                      placeholder="192.168.1.1"
+                      placeholder="192.168.0.1"
                       value={config.matrixIp}
                       onChange={(e) => setConfig(prev => ({ ...prev, matrixIp: e.target.value }))}
                       className="focus:ring-2 focus:ring-green-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vlanId">VLAN do Circuito</Label>
+                    <Label htmlFor="vlanId">VLAN-ID</Label>
                     <Input
                       id="vlanId"
                       placeholder="100"
@@ -229,17 +239,7 @@ mpls l2vpn
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="matrixInterfaceVlanId">VLAN da Interface da Matriz</Label>
-                    <Input
-                      id="matrixInterfaceVlanId"
-                      placeholder="10"
-                      value={config.matrixInterfaceVlanId}
-                      onChange={(e) => setConfig(prev => ({ ...prev, matrixInterfaceVlanId: e.target.value }))}
-                      className="focus:ring-2 focus:ring-green-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="branchCount">Quantidade de Filiais</Label>
+                    <Label htmlFor="branchCount">Número de Filiais</Label>
                     <Input
                       id="branchCount"
                       type="number"
@@ -277,12 +277,12 @@ mpls l2vpn
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor={`branchIp${index}`}>IP da Filial</Label>
+                            <Label htmlFor={`branchTag${index}`}>Tag da Filial</Label>
                             <Input
-                              id={`branchIp${index}`}
-                              placeholder="192.168.1.2"
-                              value={branch.ip}
-                              onChange={(e) => updateBranch(index, 'ip', e.target.value)}
+                              id={`branchTag${index}`}
+                              placeholder="FILIAL-SP"
+                              value={branch.tag}
+                              onChange={(e) => updateBranch(index, 'tag', e.target.value)}
                               className="focus:ring-2 focus:ring-teal-500"
                             />
                           </div>
@@ -293,16 +293,6 @@ mpls l2vpn
                               placeholder="1001"
                               value={branch.pwId}
                               onChange={(e) => updateBranch(index, 'pwId', e.target.value)}
-                              className="focus:ring-2 focus:ring-teal-500"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor={`interfaceVlanId${index}`}>VLAN da Interface</Label>
-                            <Input
-                              id={`interfaceVlanId${index}`}
-                              placeholder="20"
-                              value={branch.interfaceVlanId}
-                              onChange={(e) => updateBranch(index, 'interfaceVlanId', e.target.value)}
                               className="focus:ring-2 focus:ring-teal-500"
                             />
                           </div>
