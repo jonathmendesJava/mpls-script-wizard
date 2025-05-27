@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Network } from 'lucide-react';
@@ -12,7 +11,7 @@ import { validateForm, copyToClipboard, downloadScript } from '@/utils/mplsUtils
 const Index = () => {
   const [config, setConfig] = useState<NetworkConfig>({
     matrixName: '',
-    matrixTag: '', // Added missing matrixTag
+    matrixTag: '',
     matrixIp: '',
     vlanId: '',
     branchCount: 0,
@@ -21,13 +20,19 @@ const Index = () => {
 
   const [showScripts, setShowScripts] = useState(false);
 
+  const handleMatrixIpChange = (value: string) => {
+    // Remove vírgulas e substitui por pontos, permite apenas números e pontos
+    const cleanedValue = value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+    setConfig(prev => ({ ...prev, matrixIp: cleanedValue }));
+  };
+
   const handleBranchCountChange = (count: number) => {
     setConfig(prev => ({
       ...prev,
       branchCount: count,
       branches: Array(count).fill(null).map((_, index) => ({
         name: `EDD-FILIAL-${String(index + 1).padStart(3, '0')}`,
-        tag: `FILIAL-${String(index + 1).padStart(2, '0')}`, // Added missing tag
+        tag: `FILIAL-${String(index + 1).padStart(2, '0')}`,
         pwId: '',
         ip: ''
       }))
@@ -35,10 +40,17 @@ const Index = () => {
   };
 
   const updateBranch = (index: number, field: keyof BranchOffice, value: string) => {
+    let processedValue = value;
+    
+    // Se for o campo IP, aplica a mesma validação
+    if (field === 'ip') {
+      processedValue = value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+    }
+    
     setConfig(prev => ({
       ...prev,
       branches: prev.branches.map((branch, i) => 
-        i === index ? { ...branch, [field]: value } : branch
+        i === index ? { ...branch, [field]: processedValue } : branch
       )
     }));
   };
@@ -72,6 +84,7 @@ const Index = () => {
                 config={config}
                 onConfigChange={setConfig}
                 onBranchCountChange={handleBranchCountChange}
+                onMatrixIpChange={handleMatrixIpChange}
               />
 
               <BranchConfiguration

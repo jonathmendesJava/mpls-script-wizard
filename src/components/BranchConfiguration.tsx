@@ -48,6 +48,7 @@ export const BranchConfiguration: React.FC<BranchConfigurationProps> = ({
                   onChange={(e) => onBranchUpdate(index, 'ip', e.target.value)}
                   className="focus:ring-2 focus:ring-green-500"
                 />
+                <p className="text-xs text-gray-500">Use apenas pontos como separadores</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor={`pwId${index}`}>PW-ID</Label>
