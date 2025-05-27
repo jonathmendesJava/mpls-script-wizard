@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,14 +22,13 @@ const scriptGenerators: ScriptGenerator[] = [
     route: '/mpls-generator',
     available: true
   },
-  // Futuros geradores podem ser adicionados aqui
   {
     id: 'mpls-vlan-tagged',
     name: 'MPLS com VLAN Tagged',
-    description: 'Configuração de scripts para circuitos com VLAN Tagged (Em breve)',
+    description: 'Configuração de scripts para circuitos com VLAN Tagged, incluindo configuração de VLANs de interface',
     icon: Settings,
-    route: '#',
-    available: false
+    route: '/mpls-tagged-generator',
+    available: true
   }
 ];
 
