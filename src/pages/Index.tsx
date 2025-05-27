@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,10 +73,11 @@ mpls l2vpn
 vpls-group TRANSPORTES-VPN
   vpn ${config.matrixName}
    vfi
-    pw-type vlan ${config.vlanId}
+    pw-type vlan
 ${pwConfig}
    !
    bridge-domain
+    dot1q ${config.vlanId}
     access-interface gigabit-ethernet-1/1/3
     !
    !
@@ -99,13 +99,14 @@ mpls l2vpn
  vpls-group TRANSPORTES-VPN
   vpn ${branch.name}
    vfi
-    pw-type vlan ${config.vlanId}
+    pw-type vlan
     neighbor ${config.matrixIp}
      pw-id ${branch.pwId}
      split-horizon disable
     !
    !
    bridge-domain
+    dot1q ${config.vlanId}
     access-interface gigabit-ethernet-1/1/3
     !
    !
