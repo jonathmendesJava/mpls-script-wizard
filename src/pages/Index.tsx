@@ -12,6 +12,7 @@ import { validateForm, copyToClipboard, downloadScript } from '@/utils/mplsUtils
 const Index = () => {
   const [config, setConfig] = useState<NetworkConfig>({
     matrixName: '',
+    matrixTag: '', // Added missing matrixTag
     matrixIp: '',
     vlanId: '',
     branchCount: 0,
@@ -26,6 +27,7 @@ const Index = () => {
       branchCount: count,
       branches: Array(count).fill(null).map((_, index) => ({
         name: `EDD-FILIAL-${String(index + 1).padStart(3, '0')}`,
+        tag: `FILIAL-${String(index + 1).padStart(2, '0')}`, // Added missing tag
         pwId: '',
         ip: ''
       }))
